@@ -3,30 +3,42 @@
 function makePyramidMaterial() {
     var pyrColor = new THREE.Color(0xffff00);
     //var material = new THREE.MeshBasicMaterial( { color: pyrColor } );
+    var tex = new THREE.ImageUtils.loadTexture('cosine-texture.png');
 
-    var material = new THREE.MeshLambertMaterial( {
+    var material = new THREE.MeshPhongMaterial( {
          color: pyrColor,
+         bumpMap: tex
          //side: THREE.DoubleSide
          } );
 
     return material;
 }
 
-function makePyramid(material) {      
+// Make a pyramid like a cone, just by restricting the number of faces
+// around the circumference
+function makeCylinderPyramid(material) {
+    var geom = new THREE.CylinderGeometry(0, 1, 1, 4);
+    var pyramid = new THREE.Mesh(geom, material);
+    return pyramid;
+}
+
+function makePolygonPyramid() {
+    var material = makePyramidMaterial();
     var geom = new THREE.Geometry();
     geom.vertices.push(new THREE.Vector3(0.5, 0, 0.5));   // 0
     geom.vertices.push(new THREE.Vector3(0.5, 0, -0.5));  // 1
     geom.vertices.push(new THREE.Vector3(-0.5, 0, -0.5)); // 2
     geom.vertices.push(new THREE.Vector3(-0.5, 0, 0.5));  // 3
-    geom.vertices.push(new THREE.Vector3(0, 1, 0));       // 4
+    geom.vertices.push(new THREE.Vector3(0, 0.5, 0));       // 4
 
-    // Vertex winding is counter-clockwise viewed from outside the solid
+    // Vertices are listed in counter-clockwise order when seen from
+    //   outside the solid (in "front" of the face)
     geom.faces.push(new THREE.Face3(3, 0, 4));
     geom.faces.push(new THREE.Face3(0, 1, 4));
     geom.faces.push(new THREE.Face3(1, 2, 4));
     geom.faces.push(new THREE.Face3(2, 3, 4));
-    geom.faces.push(new THREE.Face3(0, 3, 2));
-    geom.faces.push(new THREE.Face3(2, 1, 0));
+    geom.faces.push(new THREE.Face3(0, 3, 2)); // Bottom made from
+    geom.faces.push(new THREE.Face3(2, 1, 0)); // two triangles
 
     // Auto-compute the normals
     geom.computeFaceNormals();   // Must happen first
@@ -34,12 +46,6 @@ function makePyramid(material) {
       
     var pyramid = new THREE.Mesh(geom, material);
     //pyramid.rotation.y = Math.PI/8;
-    return pyramid;
-}
-
-function makePyramidCone(material) {
-    var geom = new THREE.CylinderGeometry(0, 0.5, 1, 4, 1);
-    var pyramid = new THREE.Mesh(geom, material);
     return pyramid;
 }
 
@@ -133,14 +139,14 @@ function drawstuff() {
   
   // Add a jack with arrows
   arrowjack = makeArrowJack();
-  // arrowjack.translateY(-1.5); // Local Y
-  // arrowjack.translateX(-0.5); // Local X
-  // arrowjack.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
+  //arrowjack.translateY(-1.5); // Local Y
+  //arrowjack.translateX(-0.5); // Local X
+  //arrowjack.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
   scene.add(arrowjack);
   
   // Add an ice-cream cone
   cone = makeIceCreamCone();
-  cone.translateX(1);
+  cone.translateX(3);
   cone.translateZ(-3);
   scene.add(cone);
   
@@ -151,11 +157,20 @@ function drawstuff() {
   scene.add(groundPlane);
   
   var pyrMaterial = makePyramidMaterial();
-  var pyramid = makePyramid(pyrMaterial);
-  pyramid.translateX(2);
-  pyramid.translateY(-1);
-  pyramid.translateZ(-1);
-  scene.add(pyramid);
+  var cylPyramid = makeCylinderPyramid(pyrMaterial);
+  //cylPyramid.translateZ();
+  cylPyramid.translateY(3);
+  scene.add(cylPyramid);
+  
+  var pyramid = makePolygonPyramid();
+  pyramid.translateY(0.5);
+  cube.add( pyramid );
+  
+  //var pyramid = makePyramid(pyrMaterial);
+  //pyramid.translateX(2);
+  //pyramid.translateY(-1);
+  //pyramid.translateZ(-1);
+  //scene.add(pyramid);
   
   // Add some lights
   var ptLight = makeLights();
@@ -175,6 +190,7 @@ function drawstuff() {
 	  
 	  //cube.rotation.x += 0.1;
 	  cube.rotation.y += dTheta;  // changes the modeling trasformation
+      cylPyramid.rotation.y += dTheta;
 	  
 	  theta += dTheta;
 	  ptLight.intensity = lum * (0.25 * Math.sin(theta)) + 0.75;
