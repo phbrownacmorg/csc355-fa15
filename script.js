@@ -1,117 +1,5 @@
 // Code goes here
 
-function makePyramidMaterial() {
-    var pyrColor = new THREE.Color(0xffff00);
-    //var material = new THREE.MeshBasicMaterial( { color: pyrColor } );
-    var tex = new THREE.ImageUtils.loadTexture('cosine-texture.png');
-
-    var material = new THREE.MeshPhongMaterial( {
-         color: pyrColor,
-         bumpMap: tex
-         //side: THREE.DoubleSide
-         } );
-
-    return material;
-}
-
-// Make a pyramid like a cone, just by restricting the number of faces
-// around the circumference
-function makeCylinderPyramid(material) {
-    var geom = new THREE.CylinderGeometry(0, 1, 1, 4);
-    var pyramid = new THREE.Mesh(geom, material);
-    return pyramid;
-}
-
-function makePolygonPyramid() {
-    var material = makePyramidMaterial();
-    var geom = new THREE.Geometry();
-    geom.vertices.push(new THREE.Vector3(0.5, 0, 0.5));   // 0
-    geom.vertices.push(new THREE.Vector3(0.5, 0, -0.5));  // 1
-    geom.vertices.push(new THREE.Vector3(-0.5, 0, -0.5)); // 2
-    geom.vertices.push(new THREE.Vector3(-0.5, 0, 0.5));  // 3
-    geom.vertices.push(new THREE.Vector3(0, 0.5, 0));       // 4
-
-    // Vertices are listed in counter-clockwise order when seen from
-    //   outside the solid (in "front" of the face)
-    geom.faces.push(new THREE.Face3(3, 0, 4));
-    geom.faces.push(new THREE.Face3(0, 1, 4));
-    geom.faces.push(new THREE.Face3(1, 2, 4));
-    geom.faces.push(new THREE.Face3(2, 3, 4));
-    geom.faces.push(new THREE.Face3(0, 3, 2)); // Bottom made from
-    geom.faces.push(new THREE.Face3(2, 1, 0)); // two triangles
-
-    // Auto-compute the normals
-    geom.computeFaceNormals();   // Must happen first
-    geom.computeVertexNormals();
-      
-    var pyramid = new THREE.Mesh(geom, material);
-    //pyramid.rotation.y = Math.PI/8;
-    return pyramid;
-}
-
-function makeLights() {
-  var ptLight = new THREE.PointLight( 0xffffff, 3, 10000);
-  ptLight.position.set(3, 3, 0.8);
-  ptLight.add(new THREE.HemisphereLight(0x4080ff, 0x005000, 0.2));
-  ptLight.add(new THREE.AmbientLight(0x202020));
-  
-  var bulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32),
-                            new THREE.MeshPhongMaterial({
-                              color: 0xffffff,
-                              specular: 0xffffff,
-                              side: THREE.BackSide,
-                              }));
-  ptLight.add(bulb);
-  //ptLight.add(new THREE.PointLightHelper(ptLight, 0.05));
-  
-  return ptLight;
-}
-
-function makeSkyPlane() {
-  var plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000),
-          new THREE.MeshBasicMaterial( {color: 0x4080ff} ));
-  plane.translateZ(-990);
-  return plane;
-}
-
-function makeGroundPlane() {
-  var plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000),
-          new THREE.MeshBasicMaterial( {color: 0x005000} ));
-  plane.translateY(-5);        
-  plane.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
-  //plane.translateZ(-990);
-  return plane;
-}
-
-function makeIceCreamCone() {
-  var geom = new THREE.CylinderGeometry(1, 0, 2, 120, 1, true);
-  var coneTex = new THREE.ImageUtils.loadTexture('waffle-texture-256.jpg');
-  var mat = new THREE.MeshLambertMaterial( { color: new THREE.Color(0x5d4934).multiplyScalar(5),
-                                             map: coneTex } );
-  var cone = new THREE.Mesh(geom, mat);
-  
-  var icTex = new THREE.ImageUtils.loadTexture('ice-cream-texture-256.jpg');
-  var icecream = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 16),
-            new THREE.MeshPhongMaterial( { color: 0xffffff, map: icTex }));
-  icecream.translateY(1.25);
-  cone.add(icecream);
-  return cone;
-}
-
-function makeArrowJack() {
-  var ball = new THREE.Mesh(new THREE.SphereGeometry(0.03),
-          new THREE.MeshBasicMaterial( { color: 0x808080 }));
-                            
-  var origin = new THREE.Vector3(0, 0, 0);
-  ball.add(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0),
-                                 origin, 1, 0xff0000));
-  ball.add(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0),
-                                 origin, 1, 0x00ff00));
-  ball.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1),
-                                 origin, 1, 0x0000ff));
-  return ball;                            
-}
-
 function drawstuff() {
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -121,11 +9,7 @@ function drawstuff() {
   document.body.appendChild( renderer.domElement );
   
   // Make a cube
-  var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var tex = new THREE.ImageUtils.loadTexture('waffle-texture-256.jpg');
-  var material = new THREE.MeshLambertMaterial( { color: new THREE.Color(0x49176d).multiplyScalar(5),
-                                                  map: tex } );
-  var cube = new THREE.Mesh( geometry, material );
+  var cube = makeCube()
   scene.add( cube );
   cube.translateX(-2);
   
@@ -165,13 +49,7 @@ function drawstuff() {
   var pyramid = makePolygonPyramid();
   pyramid.translateY(0.5);
   cube.add( pyramid );
-  
-  //var pyramid = makePyramid(pyrMaterial);
-  //pyramid.translateX(2);
-  //pyramid.translateY(-1);
-  //pyramid.translateZ(-1);
-  //scene.add(pyramid);
-  
+    
   // Add some lights
   var ptLight = makeLights();
   scene.add(ptLight);
@@ -181,7 +59,17 @@ function drawstuff() {
   // View direction (view vector) defaults to negative Z (i.e., (0, 0, -1))
   // Up vector (which way is up for the camera?) defaults to positive Y (i.e., (0, 1, 0))
   
-
+  ptLight.oscillating = true;
+  var handleKeys = function (event) {
+      var char = event.charCode;
+      switch (String.fromCharCode(event.charCode)) {
+          case 'l':
+            ptLight.oscillating = !ptLight.oscillating;
+            break;
+        }
+  }
+  document.addEventListener('keypress', handleKeys, false);   
+  
   var theta = 0;
   var dTheta = 0.03;
   var lum = ptLight.intensity;
@@ -192,8 +80,14 @@ function drawstuff() {
 	  cube.rotation.y += dTheta;  // changes the modeling trasformation
       cylPyramid.rotation.y += dTheta;
 	  
-	  theta += dTheta;
-	  ptLight.intensity = lum * (0.25 * Math.sin(theta)) + 0.75;
+      if (ptLight.oscillating) {
+        theta += dTheta;
+        ptLight.intensity = lum * (0.25 * Math.cos(theta) + 0.75);
+      }
+      else {
+          ptLight.intensity = lum;
+          theta = 0;
+      }
 
     skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
     groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
@@ -202,3 +96,4 @@ function drawstuff() {
   render();
   
 }
+
