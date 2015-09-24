@@ -60,11 +60,30 @@ function drawstuff() {
   // Up vector (which way is up for the camera?) defaults to positive Y (i.e., (0, 1, 0))
   
   ptLight.oscillating = true;
+  helperjack.turningX = helperjack.turningY = helperjack.turningZ = false;
   var handleKeys = function (event) {
       var char = event.charCode;
       switch (String.fromCharCode(event.charCode)) {
           case 'l':
             ptLight.oscillating = !ptLight.oscillating;
+            break;
+          case 'x':
+            helperjack.turningX = !helperjack.turningX;
+            break;
+          case 'y':
+            helperjack.turningY = !helperjack.turningY;
+            break;
+          case 'z':
+            helperjack.turningZ = !helperjack.turningZ;
+            break;
+          case 'p':
+            window.setTimeout(function () {
+                cylPyramid.dTheta = -cylPyramid.dTheta;
+            }, 5000);
+            break;
+          case '?':
+            console.log('? detected');
+            $('.helptext').toggleClass('hidden');
             break;
         }
   }
@@ -73,12 +92,13 @@ function drawstuff() {
   var theta = 0;
   var dTheta = 0.03;
   var lum = ptLight.intensity;
+  cylPyramid.dTheta = dTheta;
   function render() {
 	  requestAnimationFrame( render );
 	  
 	  //cube.rotation.x += 0.1;
-	  cube.rotation.y += dTheta;  // changes the modeling trasformation
-      cylPyramid.rotation.y += dTheta;
+	  cube.rotation.y += dTheta;  // changes the modeling transformation
+      cylPyramid.rotation.y += cylPyramid.dTheta;
 	  
       if (ptLight.oscillating) {
         theta += dTheta;
@@ -88,9 +108,19 @@ function drawstuff() {
           ptLight.intensity = lum;
           theta = 0;
       }
+      
+      if (helperjack.turningX) {
+          helperjack.rotation.x += dTheta;
+      }
+      if (helperjack.turningY) {
+          helperjack.rotation.y += dTheta;
+      }
+      if (helperjack.turningZ) {
+          helperjack.rotation.z += dTheta;
+      }
 
-    skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
-    groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
+      skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
+      groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
 	  renderer.render( scene, camera );
   }
   render();

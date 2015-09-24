@@ -6,18 +6,34 @@
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
+            p.helptext {
+                position: absolute;
+                top: 10px;
+                left: 10px
+            }
+            .hidden {
+                display: none;
+            }
 		</style>
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
     <script src="objectfactory.js"></script>
     <script src="script.js"></script>
   </head>
 
   <body>
-    <h1>Hello Three.js!</h1>
+    <h1 style="display: none">Hello Three.js!</h1>
     <script>
 			// Our Javascript will go here.
 			drawstuff();
 		</script>
+        <p id="simplehelp" class="helptext">'?' to toggle help</p>
+        <p id="fullhelp" class="helptext hidden">'?' to toggle help<br />
+        'l' toggles oscillation of light<br />
+        'p' makes the pyramid spin the other way after a 5-second delay<br />
+        'x' toggles X rotation of the helper jack<br />
+        'y' toggles Y rotation of the helper jack<br />
+        'z' toggles Z rotation of the helper jack</p>
   </body>
 
 </html>
