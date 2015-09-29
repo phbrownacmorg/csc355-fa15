@@ -1,5 +1,32 @@
 // Code goes here
 
+function toggleHelp() {
+    $('.helptext').toggleClass('hidden');
+    var button = document.getElementById('helpbutton');
+    if (button.value === 'Help') {
+        button.value = 'Hide help';
+    }
+    else {
+        button.value = 'Help';
+    }
+    //$('#helpbutton')
+}
+
+function showPicked(obj) {
+    obj.material.colorSpec = obj.material.color.getStyle();
+    obj.material.color.set( 0xff0000 );
+    for (var i = 0; i < obj.children.length; i++) {
+        showPicked(obj.children[i]);
+    }
+}
+
+function clearPicked(obj) {
+    obj.material.color.setStyle(obj.material.colorSpec);
+    for (var i = 0; i < obj.children.length; i++) {
+        clearPicked(obj.children[i]);
+    }
+}
+
 function drawstuff() {
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -82,12 +109,45 @@ function drawstuff() {
             }, 5000);
             break;
           case '?':
-            console.log('? detected');
-            $('.helptext').toggleClass('hidden');
+            //console.log('? detected');
+            toggleHelp();
             break;
         }
   }
-  document.addEventListener('keypress', handleKeys, false);   
+  document.addEventListener('keypress', handleKeys, false);
+  
+  var raycaster = new THREE.Raycaster();
+  var pickedItem = undefined;
+  var handleClick = function(event) {
+      var mouse = new THREE.Vector2();
+      // Click coordinates in normalized device coordinates (NDC)
+      mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+      mouse.y = (event.clientY / renderer.domElement.clientHeight) * -2 + 1;
+      //alert(mouse.x + ' ' + mouse.y);
+      
+      if (pickedItem !== undefined) {
+          clearPicked(pickedItem);
+      }
+      pickedItem = undefined;
+      raycaster.setFromCamera(mouse, camera);
+      var intersects = raycaster.intersectObjects(scene.children, true);
+      for (var i = 0; i < intersects.length; i++) {
+          // Ignore the skyplane and the ground plane
+          if (intersects[i].object === skyPlane || intersects[i].object === groundPlane) {
+              continue;
+          }
+          //alert('Picked ' + i);
+          pickedItem = intersects[i].object;
+          while (pickedItem.parent !== scene) {
+              pickedItem = pickedItem.parent;
+          }
+          
+          // Indicate the picked item
+          showPicked(pickedItem);
+      }
+      
+  }
+  renderer.domElement.addEventListener('click', handleClick, false);
   
   var theta = 0;
   var dTheta = 0.03;

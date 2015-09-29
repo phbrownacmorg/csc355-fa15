@@ -6,10 +6,13 @@
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
-            p.helptext {
+            p.helptext, #helpbutton {
                 position: absolute;
                 top: 10px;
                 left: 10px
+            }
+            p.helptext {
+                padding-top: 10px;
             }
             .hidden {
                 display: none;
@@ -27,8 +30,11 @@
 			// Our Javascript will go here.
 			drawstuff();
 		</script>
-        <p id="simplehelp" class="helptext">'?' to toggle help</p>
-        <p id="fullhelp" class="helptext hidden">'?' to toggle help<br />
+        <form>
+            <input id="helpbutton" type="button" value="Help" onclick="toggleHelp();" />
+        </form>
+        <!--p id="simplehelp" class="helptext">'?' to toggle help</p-->
+        <p id="fullhelp" class="helptext hidden"><!--'?' to toggle help<br /-->
         'l' toggles oscillation of light<br />
         'p' makes the pyramid spin the other way after a 5-second delay<br />
         'x' toggles X rotation of the helper jack<br />
