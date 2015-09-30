@@ -1,3 +1,18 @@
+function addTurningAttribs(obj) {
+    obj.dTheta = new THREE.Vector3();
+}
+
+function thisAndDescendants(obj) {
+    var result = new Array(obj);
+    //console.log('Starting with ' + result.length);
+    for (var i = 0; i < obj.children.length; i++) {
+        //console.log('Child ' + i);
+        result = result.concat(thisAndDescendants(obj.children[i]));
+    }
+    //console.log('Returning ' + result.length);
+    return result;
+}
+
 function makePyramidMaterial() {
     var pyrColor = new THREE.Color(0xffff00);
     //var material = new THREE.MeshBasicMaterial( { color: pyrColor } );
@@ -5,7 +20,7 @@ function makePyramidMaterial() {
 
     var material = new THREE.MeshPhongMaterial( {
          color: pyrColor,
-         map: tex
+         map: tex //,
          //side: THREE.DoubleSide
          } );
 
@@ -17,12 +32,14 @@ function makePyramidMaterial() {
 function makeCylinderPyramid(material) {
     var geom = new THREE.CylinderGeometry(0, 1, 1, 4);
     var pyramid = new THREE.Mesh(geom, material);
+    addTurningAttribs(pyramid);
     return pyramid;
 }
 
 function makePolygonPyramid() {
     var material = new THREE.MeshLambertMaterial( {
-        color: 0xffff00
+        color: 0xffff00 //,
+        //side: THREE.DoubleSide
     } );
     var geom = new THREE.Geometry();
     geom.vertices.push(new THREE.Vector3(0.5, 0, 0.5));   // 0
@@ -46,6 +63,8 @@ function makePolygonPyramid() {
       
     var pyramid = new THREE.Mesh(geom, material);
     //pyramid.rotation.y = Math.PI/8;
+    addTurningAttribs(pyramid);
+
     return pyramid;
 }
 
@@ -95,6 +114,7 @@ function makeIceCreamCone() {
             new THREE.MeshPhongMaterial( { color: 0xffffff, map: icTex }));
   icecream.translateY(1.25);
   cone.add(icecream);
+  addTurningAttribs(cone);
   return cone;
 }
 
@@ -109,6 +129,7 @@ function makeArrowJack() {
                                  origin, 1, 0x00ff00));
   ball.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1),
                                  origin, 1, 0x0000ff));
+  addTurningAttribs(ball);
   return ball;                            
 }
 
@@ -118,5 +139,6 @@ function makeCube() {
     var material = new THREE.MeshLambertMaterial( { color: new THREE.Color(0x49176d).multiplyScalar(5),
                                                   map: tex } );
     var cube = new THREE.Mesh( geometry, material );
+    addTurningAttribs(cube);
     return cube;
 }

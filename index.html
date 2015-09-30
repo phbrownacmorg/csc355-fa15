@@ -6,13 +6,20 @@
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
-            p.helptext, #helpbutton {
+            .helptext, #helpbutton {
                 position: absolute;
                 top: 10px;
                 left: 10px
             }
-            p.helptext {
+            .helptext {
                 padding-top: 10px;
+                margin-left: -2em;
+            }
+            ul.helptext, ul.helptext ul {
+                list-style-type: none;
+            }
+            ul.helptext ul {
+                margin-left: -1em;
             }
             .hidden {
                 display: none;
@@ -34,12 +41,19 @@
             <input id="helpbutton" type="button" value="Help" onclick="toggleHelp();" />
         </form>
         <!--p id="simplehelp" class="helptext">'?' to toggle help</p-->
-        <p id="fullhelp" class="helptext hidden"><!--'?' to toggle help<br /-->
-        'l' toggles oscillation of light<br />
-        'p' makes the pyramid spin the other way after a 5-second delay<br />
-        'x' toggles X rotation of the helper jack<br />
-        'y' toggles Y rotation of the helper jack<br />
-        'z' toggles Z rotation of the helper jack</p>
+        <ul id="fullhelp" class="helptext hidden"><!--'?' to toggle help<br /-->
+            <li>Mouse:<ul></li><li>Click on an object to select it</li>
+            <li>Click on no object to cancel selection</li>
+            </ul></li>
+            <li>Keyboard:<ul>
+                <li>'l' toggles oscillation of light</li>
+                <li>'p' makes the pyramid spin the other way after a 5-second delay</li>
+                <li>'x' toggles X rotation of the selected object</li>
+                <li>'y' toggles Y rotation of the selected object</li>
+                <li>'z' toggles Z rotation of the selected object</li>
+            </ul></li>
+        </ul>
+ 
   </body>
 
 </html>
