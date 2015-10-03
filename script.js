@@ -149,24 +149,27 @@ function drawstuff() {
         if ((event.buttons & 1) && (pickedItem !== undefined)) {
             var newMouse = screenToNDC(event, elt);
             // Difference between mouse position and click in screen space.
-            // This will need to be scaled to get to world space.
-            // I don't yet know the factors needed.
             var diff = new THREE.Vector2();
 	    diff.subVectors(newMouse, mouse);
-	    mouse = newMouse;
-	    //var fudge = new THREE.Vector3(1.75, 1/1.3, 1); // 1003x438
-	    //var fudge = new THREE.Vector3(1.2, 1/1.3, 1); // 1003x637
-	    var kludge = 770;  // Basically a magic number
+	    mouse = newMouse; // Update mouse
+
+	    // Counteract the perspective depth scaling
+	    diff.multiplyScalar(depthScalingFactor(pickedItem, camera));
+
+	    // Empirically-derived kludge and fudge factors
+	    // I bet there's a relationship between kludge and the
+	    // camera's FOV, which I will figure out iff I have to
+	    var kludge = 770;
 	    var fudge = new THREE.Vector3(kludge / elt.clientHeight,
-					  kludge / elt.clientWidth,
-					  1);
+					  kludge / elt.clientWidth, 1);
 	    diff.multiply(fudge);
 	    //console.log(diff.x + " " + diff.y);
 
-	    var worldX = screenToObject(new THREE.Vector3(1, 0, 0), 
-					pickedItem, camera);
-            var worldY = screenToObject(new THREE.Vector3(0, 1, 0),
-					pickedItem, camera);
+	    // Vectors along which to translate are world-space X and Y
+	    var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
+	    worldX.normalize();
+            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0),	pickedItem);
+	    worldY.normalize();
             //console.log('worldX: ' + JSON.stringify(worldX));
 
             // Translate pickedItem along the worldX and worldY vectors
@@ -176,13 +179,14 @@ function drawstuff() {
     }
     renderer.domElement.addEventListener('mousemove', dragObject, false);
   
+    // Key handler
     var handleKeys = function (event) {
 	var char = event.charCode;
 	switch (String.fromCharCode(event.charCode)) {
 	case 'l':
             ptLight.oscillating = !ptLight.oscillating;
             break;
-    case 's':
+	case 's':
             if (pickedItem !== undefined) {
                 pickedItem.scale = pickedItem.scale.multiplyScalar(2);
             }

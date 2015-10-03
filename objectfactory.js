@@ -1,12 +1,17 @@
-function removeObjectRotation(vec, obj) {
+// Rotate THREE.Vector3 'vec' by the inverse of the rotation of 
+// THREE.Object3D 'obj'.  Returns the rotated vector.
+// 'obj' and 'vec' are not changed.
+function undoObjRot(vec, obj) {
     // Find the inverse of the object's rotation
     var q = obj.quaternion.clone().inverse();
     var result = vec.clone().applyQuaternion(q);
     return result;
 }
 
-function screenToObject(vec, obj, camera) {
-    var result = removeObjectRotation(vec, obj);
+// Find and return the perspective depth scaling factor for 
+// THREE.Object3D 'obj', from the point of view of THREE.Camera 'camera'.
+// 'obj' and 'camera' are not changed.
+function depthScalingFactor(obj, camera) {
     // pickedItem.parent === scene, so 
     //   pickedItem.matrix === pickedItem.matrixWorld
     var objLoc = new THREE.Vector3();
@@ -23,11 +28,9 @@ function screenToObject(vec, obj, camera) {
     // console.log(JSON.stringify(dir));
     diff.projectOnVector(camera.getWorldDirection());
     //console.log(JSON.stringify(diff));
-    // Undo the perspective division
-    result.multiplyScalar(diff.length()); //diff.z);
-    
-    return result;
-}
+
+    return diff.length();
+}    
 
 function addTurningAttribs(obj) {
     obj.dTheta = new THREE.Vector3();
