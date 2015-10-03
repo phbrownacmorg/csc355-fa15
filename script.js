@@ -15,16 +15,27 @@ function toggleHelp() {
 function showPicked(obj) {
     obj.material.colorSpec = obj.material.color.getStyle();
     obj.material.color.set( 0xff0000 );
-    for (var i = 0; i < obj.children.length; i++) {
-        showPicked(obj.children[i]);
-    }
+    // for (var i = 0; i < obj.children.length; i++) {
+    //     showPicked(obj.children[i]);
+    // }
 }
 
 function clearPicked(obj) {
     obj.material.color.setStyle(obj.material.colorSpec);
-    for (var i = 0; i < obj.children.length; i++) {
-        clearPicked(obj.children[i]);
-    }
+    // for (var i = 0; i < obj.children.length; i++) {
+    //     clearPicked(obj.children[i]);
+    // }
+}
+
+function screenToNDC(event, elt) {
+    var mouse = new THREE.Vector2();
+    // Click coordinates in normalized device coordinates (NDC)
+    mouse.x = (event.clientX / elt.clientWidth) * 2 - 1;
+    mouse.y = (event.clientY / elt.clientHeight) * -2 + 1;
+    // console.log('screenToNDC((' + event.clientX + ',' + event.clientY
+    // 		+ '), (' + elt.clientWidth + ',' + elt.clientHeight 
+    // 		+ ') = (' + mouse.x + ',' + mouse.y + ')');
+    return mouse;
 }
 
 function drawstuff() {
@@ -35,6 +46,11 @@ function drawstuff() {
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
+
+    var elt = renderer.domElement;
+    // alert(elt.clientWidth + " x " + elt.clientHeight + " : "
+    // 	  + elt.scrollWidth + " x " + elt.scrollHeight + " : "
+    // 	  + elt.offsetWidth + " x " + elt.offsetHeight);
   
     var theta = 0;
     var dTheta = 0.03;
@@ -44,6 +60,7 @@ function drawstuff() {
     objects = thisAndDescendants(cube);
     scene.add( cube );
     cube.translateX(-2);
+    cube.translateZ(-5);
   
   // Add an axis jack
     var helperjack = new THREE.AxisHelper();
@@ -57,7 +74,7 @@ function drawstuff() {
     
     // Add a jack with arrows
     arrowjack = makeArrowJack();
-    objects = objects.concat(thisAndDescendants(arrowjack));
+    //objects = objects.concat(thisAndDescendants(arrowjack));
     //arrowjack.translateY(-1.5); // Local Y
     //arrowjack.translateX(-0.5); // Local X
     //arrowjack.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
@@ -65,9 +82,13 @@ function drawstuff() {
   
     // Add an ice-cream cone
     cone = makeIceCreamCone();
-    objects = objects.concat(thisAndDescendants(cone));
+    cone.traverse(function(obj) {
+	objects.push(obj);
+    });
+    //objects = objects.concat(thisAndDescendants(cone));
     cone.translateX(3);
     cone.translateZ(-3);
+    cone.add(new THREE.AxisHelper());
     scene.add(cone);
     
     // Add background planes
@@ -101,42 +122,70 @@ function drawstuff() {
   
     var raycaster = new THREE.Raycaster();
     var pickedItem = undefined;
+    var mouse = new THREE.Vector2();
     var handleClick = function(event) {
-	var mouse = new THREE.Vector2();
-	// Click coordinates in normalized device coordinates (NDC)
-	mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-	mouse.y = (event.clientY / renderer.domElement.clientHeight) * -2 + 1;
-	//alert(mouse.x + ' ' + mouse.y);
-	
-	if (pickedItem !== undefined) {
-            clearPicked(pickedItem);
-	}
-	pickedItem = undefined;
-	raycaster.setFromCamera(mouse, camera);
-	var intersects = raycaster.intersectObjects(objects);
-	alert('Intersecting ' + intersects.length + ' objects');
-	for (var i = 0; i < intersects.length; i++) {
-	    // Only do this one time.  Take advantage of the fact that the
-	    // intersections are sorted closest-first.
-            //alert('Picked ' + i);
-            pickedItem = intersects[i].object;
+        mouse = screenToNDC(event, elt);
+        if (pickedItem !== undefined) {
+            pickedItem.traverse(clearPicked);
+        }
+        pickedItem = undefined;
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(objects);
+        //alert('Intersecting ' + intersects.length + ' objects');
+        
+        // Take advantage of the fact that the intersections are sorted closest-first
+        if (intersects.length > 0) {
+            pickedItem = intersects[0].object;
             while (pickedItem.parent !== scene) {
-		pickedItem = pickedItem.parent;
+                pickedItem = pickedItem.parent;
             }
-            
-            // Indicate the picked item
-            showPicked(pickedItem);
-            break;
-	}
-	
+            pickedItem.traverse(showPicked);
+        }
+    };
+    elt.addEventListener('mousedown', handleClick, false);
+    
+    var dragObject = function(event) {
+	//console.log(event.type);
+        if ((event.buttons & 1) && (pickedItem !== undefined)) {
+            var newMouse = screenToNDC(event, elt);
+            // Difference between mouse position and click in screen space.
+            // This will need to be scaled to get to world space.
+            // I don't yet know the factors needed.
+            var diff = new THREE.Vector2();
+	    diff.subVectors(newMouse, mouse);
+	    mouse = newMouse;
+	    //var fudge = new THREE.Vector3(1.75, 1/1.3, 1); // 1003x438
+	    //var fudge = new THREE.Vector3(1.2, 1/1.3, 1); // 1003x637
+	    var kludge = 770;  // Basically a magic number
+	    var fudge = new THREE.Vector3(kludge / elt.clientHeight,
+					  kludge / elt.clientWidth,
+					  1);
+	    diff.multiply(fudge);
+	    //console.log(diff.x + " " + diff.y);
+
+	    var worldX = screenToObject(new THREE.Vector3(1, 0, 0), 
+					pickedItem, camera);
+            var worldY = screenToObject(new THREE.Vector3(0, 1, 0),
+					pickedItem, camera);
+            //console.log('worldX: ' + JSON.stringify(worldX));
+
+            // Translate pickedItem along the worldX and worldY vectors
+	    pickedItem.translateOnAxis(worldX, diff.x);
+	    pickedItem.translateOnAxis(worldY, diff.y);
+        }
     }
-    renderer.domElement.addEventListener('click', handleClick, false);
+    renderer.domElement.addEventListener('mousemove', dragObject, false);
   
     var handleKeys = function (event) {
 	var char = event.charCode;
 	switch (String.fromCharCode(event.charCode)) {
 	case 'l':
             ptLight.oscillating = !ptLight.oscillating;
+            break;
+    case 's':
+            if (pickedItem !== undefined) {
+                pickedItem.scale = pickedItem.scale.multiplyScalar(2);
+            }
             break;
 	case 'x':
             if (pickedItem !== undefined) {
@@ -203,6 +252,13 @@ function drawstuff() {
 	groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
 	renderer.render( scene, camera );
     }
+
+    //var v1 = new THREE.Vector3(2, 3, 5);
+    //var v2 = new THREE.Vector3(7, 11, 13);
+    //v1.multiply(v2);
+    //console.log(JSON.stringify(v1));
+    // 1003x637 (no console)
+    
     render();
 }
 

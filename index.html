@@ -42,12 +42,15 @@
         </form>
         <!--p id="simplehelp" class="helptext">'?' to toggle help</p-->
         <ul id="fullhelp" class="helptext hidden"><!--'?' to toggle help<br /-->
-            <li>Mouse:<ul></li><li>Click on an object to select it</li>
-            <li>Click on no object to cancel selection</li>
+            <li>Mouse:<ul>
+                <li class="noselected">Click on an object to select it</li>
+                <li class="objselected dragging">Drag to translate the object</li>
+                <li class="objselected">Click on no object to cancel selection</li>
             </ul></li>
             <li>Keyboard:<ul>
                 <li>'l' toggles oscillation of light</li>
                 <li>'p' makes the pyramid spin the other way after a 5-second delay</li>
+                <li>'s' doubles the size of the selected object</li>
                 <li>'x' toggles X rotation of the selected object</li>
                 <li>'y' toggles Y rotation of the selected object</li>
                 <li>'z' toggles Z rotation of the selected object</li>

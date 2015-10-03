@@ -1,3 +1,34 @@
+function removeObjectRotation(vec, obj) {
+    // Find the inverse of the object's rotation
+    var q = obj.quaternion.clone().inverse();
+    var result = vec.clone().applyQuaternion(q);
+    return result;
+}
+
+function screenToObject(vec, obj, camera) {
+    var result = removeObjectRotation(vec, obj);
+    // pickedItem.parent === scene, so 
+    //   pickedItem.matrix === pickedItem.matrixWorld
+    var objLoc = new THREE.Vector3();
+    objLoc.setFromMatrixPosition(obj.matrixWorld);
+    //console.log(JSON.stringify(obj.matrix));
+    //console.log(JSON.stringify(obj.matrixWorld));
+    //console.log(JSON.stringify(objLoc));
+    var eyeLoc = new THREE.Vector3();
+    eyeLoc.setFromMatrixPosition(camera.matrixWorld);
+    
+    var diff = new THREE.Vector3();
+    diff.subVectors(eyeLoc, objLoc);
+    // var dir = camera.getWorldDirection();
+    // console.log(JSON.stringify(dir));
+    diff.projectOnVector(camera.getWorldDirection());
+    //console.log(JSON.stringify(diff));
+    // Undo the perspective division
+    result.multiplyScalar(diff.length()); //diff.z);
+    
+    return result;
+}
+
 function addTurningAttribs(obj) {
     obj.dTheta = new THREE.Vector3();
 }
@@ -107,9 +138,15 @@ function makeIceCreamCone() {
   var coneTex = new THREE.ImageUtils.loadTexture('waffle-texture-256.jpg');
   var mat = new THREE.MeshLambertMaterial( { color: new THREE.Color(0x5d4934).multiplyScalar(5),
                                              map: coneTex } );
+  //mat.transparent = true;
+  //mat.opacity = 0.0;
   var cone = new THREE.Mesh(geom, mat);
   
-  var icTex = new THREE.ImageUtils.loadTexture('ice-cream-texture-256.jpg');
+  var icTex = new THREE.ImageUtils.loadTexture('Haveaniceday-512.jpg');
+  icTex.wrapS = THREE.RepeatWrapping;
+  //icTex.wrapT = THREE.RepeatWrapping;
+  icTex.repeat.set(3, 1.5);
+  icTex.offset.set(-0.1, -0.25);
   var icecream = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 16),
             new THREE.MeshPhongMaterial( { color: 0xffffff, map: icTex }));
   icecream.translateY(1.25);
