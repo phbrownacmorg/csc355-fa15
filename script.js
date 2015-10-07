@@ -149,36 +149,76 @@ function drawstuff() {
         if ((event.buttons & 1) && (pickedItem !== undefined)) {
             var newMouse = screenToNDC(event, elt);
             // Difference between mouse position and click in screen space.
-            var diff = new THREE.Vector2();
-	    diff.subVectors(newMouse, mouse);
-	    mouse = newMouse; // Update mouse
-
-	    // Counteract the perspective depth scaling
-	    diff.multiplyScalar(depthScalingFactor(pickedItem, camera));
-
-	    // Empirically-derived kludge and fudge factors
-	    // I bet there's a relationship between kludge and the
-	    // camera's FOV, which I will figure out iff I have to
-	    var kludge = 770;
-	    var fudge = new THREE.Vector3(kludge / elt.clientHeight,
-					  kludge / elt.clientWidth, 1);
-	    diff.multiply(fudge);
-	    //console.log(diff.x + " " + diff.y);
-
-	    // Vectors along which to translate are world-space X and Y
-	    var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
-	    worldX.normalize();
+            var drag = new THREE.Vector2();
+            drag.subVectors(newMouse, mouse);
+            mouse = newMouse; // Update mouse
+    
+            // Counteract the perspective depth scaling
+            drag.multiplyScalar(depthScalingFactor(pickedItem, camera));
+    
+            // Empirically-derived kludge and fudge factors
+            // I bet there's a relationship between kludge and the
+            // camera's FOV, which I will figure out iff I have to
+            var kludge = elt.clientWidth * .770;  // lab machine, 1280 x 643 window
+                //770 on home Linux machine, 1003 x ?? window;
+            // Fudge has to do with the fact that NDC isn't square in screen space
+            var fudge = new THREE.Vector2(kludge / elt.clientHeight,
+                                          kludge / elt.clientWidth);
+            drag.multiply(fudge);
+            //console.log(diff.x + " " + diff.y);
+    
+            // Vectors along which to translate are world-space X and Y
+            var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
+            worldX.normalize();
             var worldY = undoObjRot(new THREE.Vector3(0, 1, 0),	pickedItem);
-	    worldY.normalize();
-            //console.log('worldX: ' + JSON.stringify(worldX));
-
-            // Translate pickedItem along the worldX and worldY vectors
-	    pickedItem.translateOnAxis(worldX, diff.x);
-	    pickedItem.translateOnAxis(worldY, diff.y);
+            worldY.normalize();
+                //console.log('worldX: ' + JSON.stringify(worldX));
+    
+                // Translate pickedItem along the worldX and worldY vectors
+            pickedItem.translateOnAxis(worldX, drag.x);
+            pickedItem.translateOnAxis(worldY, drag.y);
         }
     }
     renderer.domElement.addEventListener('mousemove', dragObject, false);
-  
+    
+    var turnObject = function(event) {
+        if ((event.buttons & 1) && (pickedItem !== undefined)) {
+            //alert('Turn, turn, turn');
+            // Mouse to NDC
+            var newMouse = screenToNDC(event, elt);
+            
+            // Difference between mouse position and click in screen space.
+            var drag = new THREE.Vector2();
+            drag.subVectors(newMouse, mouse);
+            mouse = newMouse; // Update mouse
+
+            // Empirically-derived kludge and fudge factors
+            // I bet there's a relationship between kludge and the
+            // camera's FOV, which I will figure out iff I have to
+            var kludge = elt.clientWidth;  // lab machine, 1280 x 643 window
+            // Fudge has to do with the fact that NDC isn't square in screen space
+            var fudge = new THREE.Vector2((kludge * .5) / elt.clientHeight,
+                                          kludge / elt.clientWidth);
+            drag.multiply(fudge);
+
+            // NDC to X and Y Euler angles
+            var rotX = -drag.y * Math.PI;
+            var rotY = drag.x * Math.PI;
+            //alert(rotX);
+
+            // Vectors about which to rotate are world-space X and Y
+            var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
+            worldX.normalize();
+            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0),	pickedItem);
+            worldY.normalize();
+
+            // Do the actual rotation
+            pickedItem.rotateOnAxis(worldX, rotX);
+            pickedItem.rotateOnAxis(worldY, rotY);
+        }
+    }
+    //elt.addEventListener('mousemove', turnObject, false);
+    
     // Key handler
     var handleKeys = function (event) {
 	var char = event.charCode;
@@ -186,39 +226,53 @@ function drawstuff() {
 	case 'l':
             ptLight.oscillating = !ptLight.oscillating;
             break;
+	case 'p':
+            window.setTimeout(function () {
+                    cylPyramid.dTheta.setY(-cylPyramid.dTheta.y);
+                }, 5000);
+            break;
+    case 'r':
+            elt.removeEventListener('mousemove', dragObject, false);
+            elt.addEventListener('mousemove', turnObject, false);
+            break;
 	case 's':
             if (pickedItem !== undefined) {
                 pickedItem.scale = pickedItem.scale.multiplyScalar(2);
             }
             break;
+    case 't':
+            elt.removeEventListener('mousemove', turnObject, false);
+            elt.addEventListener('mousemove', dragObject, false);
+            break;
 	case 'x':
             if (pickedItem !== undefined) {
-		if (pickedItem.dTheta.x === 0) {
+                if (pickedItem.dTheta.x === 0) {
                     pickedItem.dTheta.setX(dTheta);
-		}
-		else pickedItem.dTheta.setX(0);
+                }
+                else pickedItem.dTheta.setX(0);
             }
             break;
 	case 'y':
             if (pickedItem !== undefined) {
-		if (pickedItem.dTheta.y === 0) {
+                if (pickedItem.dTheta.y === 0) {
                     pickedItem.dTheta.setY(dTheta);
-		}
-		else pickedItem.dTheta.setY(0);
+                }
+                else pickedItem.dTheta.setY(0);
             }
             break;
 	case 'z':
             if (pickedItem !== undefined) {
-		if (pickedItem.dTheta.z === 0) {
+                if (pickedItem.dTheta.z === 0) {
                     pickedItem.dTheta.setZ(dTheta);
-		}
-		else pickedItem.dTheta.setZ(0);
+                }
+                else pickedItem.dTheta.setZ(0);
             }
             break;
-	case 'p':
-            window.setTimeout(function () {
-		cylPyramid.dTheta.setY(-cylPyramid.dTheta.y);
-            }, 5000);
+    case '0':
+            alert('0 detected');
+            if (pickedItem !== undefined) {
+                pickedItem.rotation = new THREE.Euler(0, 0, 0);
+            }
             break;
 	case '?':
             //console.log('? detected');
