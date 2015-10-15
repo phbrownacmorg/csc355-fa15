@@ -123,6 +123,7 @@ function drawstuff() {
     var raycaster = new THREE.Raycaster();
     var pickedItem = undefined;
     var mouse = new THREE.Vector2();
+    
     var handleClick = function(event) {
         mouse = screenToNDC(event, elt);
         if (pickedItem !== undefined) {
@@ -142,7 +143,7 @@ function drawstuff() {
             pickedItem.traverse(showPicked);
         }
     };
-    elt.addEventListener('mousedown', handleClick, false);
+    elt.addEventListener('mousedown', handleClick);
     
     var dragObject = function(event) {
 	//console.log(event.type);
@@ -159,8 +160,9 @@ function drawstuff() {
             // Empirically-derived kludge and fudge factors
             // I bet there's a relationship between kludge and the
             // camera's FOV, which I will figure out iff I have to
-            var kludge = elt.clientWidth * .770;  // lab machine, 1280 x 643 window
-                //770 on home Linux machine, 1003 x ?? window;
+            var kludge = elt.clientWidth * .770;  
+	        // 990 on lab machine, 1280 x 643 window
+                // 770 on home Linux machine, 1003 x 637 window;
             // Fudge has to do with the fact that NDC isn't square in screen space
             var fudge = new THREE.Vector2(kludge / elt.clientHeight,
                                           kludge / elt.clientWidth);
@@ -219,6 +221,33 @@ function drawstuff() {
     }
     //elt.addEventListener('mousemove', turnObject, false);
     
+    var diff = new THREE.Vector2(0, 0);
+    var startDrag = function(event) {
+        //console.log('Start drag');
+        elt.addEventListener('mousemove', controlObject, false);
+    }
+    
+    var finishDrag = function(event) {
+        //console.log('End drag');
+        elt.removeEventListener('mousemove', controlObject, false);
+        diff.set(0, 0);
+    }
+    
+    var controlObject = function(event) {
+        if ((event.buttons & 1) && (pickedItem !== undefined)) {
+            // Mouse to NDC
+            var newMouse = screenToNDC(event, elt);
+            
+            // Difference between mouse position and click in screen space.
+            diff.subVectors(newMouse, mouse);
+            //console.log(JSON.stringify(diff));
+        }
+        else if (event.buttons === 0) { // Oops!  Missed a mouseup
+            finishDrag();
+        }
+    };
+    
+    
     // Key handler
     var handleKeys = function (event) {
 	var char = event.charCode;
@@ -233,7 +262,12 @@ function drawstuff() {
             break;
     case 'r':
             elt.removeEventListener('mousemove', dragObject, false);
+            elt.removeEventListener('mousedown', startDrag);
+            elt.removeEventListener('mouseup', finishDrag, false);
             elt.addEventListener('mousemove', turnObject, false);
+            $('.dragging').addClass('hidden');
+            $('.control').addClass('hidden');
+            $('.turning').removeClass('hidden');
             break;
 	case 's':
             if (pickedItem !== undefined) {
@@ -242,7 +276,12 @@ function drawstuff() {
             break;
     case 't':
             elt.removeEventListener('mousemove', turnObject, false);
+            elt.removeEventListener('mousedown', startDrag);
+            elt.removeEventListener('mouseup', finishDrag, false);
             elt.addEventListener('mousemove', dragObject, false);
+            $('.dragging').removeClass('hidden');
+            $('.control').addClass('hidden');
+            $('.turning').addClass('hidden');
             break;
 	case 'x':
             if (pickedItem !== undefined) {
@@ -269,10 +308,27 @@ function drawstuff() {
             }
             break;
     case '0':
-            alert('0 detected');
+            //alert('0 detected');
             if (pickedItem !== undefined) {
-                pickedItem.rotation = new THREE.Euler(0, 0, 0);
+                pickedItem.rotation.setFromVector3(new THREE.Vector3(0, 0, 0));
             }
+            break;
+    case '1':
+            // Mouse control of the selected object, *not* using pointer lock
+            $('.dragging').addClass('hidden');
+            $('.control').removeClass('hidden');
+            $('.turning').addClass('hidden');
+            elt.removeEventListener('mousemove', dragObject, false);
+            elt.removeEventListener('mousemove', turnObject, false);
+            elt.addEventListener('mousedown', startDrag);
+            elt.addEventListener('mouseup', finishDrag, false);
+            dragStarted = false;
+            break;
+    case '2':
+            // Mouse control of selected object using pointer lock
+            $('.dragging').addClass('hidden');
+            $('.control').removeClass('hidden');
+            $('.turning').addClass('hidden');
             break;
 	case '?':
             //console.log('? detected');
@@ -283,28 +339,36 @@ function drawstuff() {
     document.addEventListener('keypress', handleKeys, false);
   
     var lum = ptLight.intensity;
+    var dz = 0.1;
     cylPyramid.dTheta.setY(dTheta);
     cube.dTheta.setY(dTheta);
 
     function render() {
-	requestAnimationFrame( render );
+        requestAnimationFrame( render );
 	
-	if (ptLight.oscillating) {
+        if (ptLight.oscillating) {
             theta += dTheta;
             ptLight.intensity = lum * (0.25 * Math.cos(theta) + 0.75);
-	}
-	else {
+        }
+        else {
             ptLight.intensity = lum;
             theta = 0;
-	}
+        }
       
-	objects.forEach(function (obj) {
-	    if (obj.parent === scene) {
-		var rotVec = obj.rotation.toVector3();
-		rotVec.add(obj.dTheta);
-		obj.rotation.setFromVector3(rotVec);
+        objects.forEach(function (obj) {
+            if (obj.parent === scene) {
+                var rotVec = obj.rotation.toVector3();
+                rotVec.add(obj.dTheta);
+                obj.rotation.setFromVector3(rotVec);
             }
-	});
+        });
+    
+        // If we're controlling the picked object as a character...
+        if ((pickedItem !== undefined) && (diff.x !== 0 || diff.y !== 0)) {
+            //console.log('render: ' + JSON.stringify(diff) + ' ' + pickedItem);
+            pickedItem.rotation.y += diff.x * dTheta;
+            pickedItem.translateZ(diff.y * dz);
+        }
 
 	skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
 	groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
