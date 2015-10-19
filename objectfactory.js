@@ -182,3 +182,44 @@ function makeCube() {
     addTurningAttribs(cube);
     return cube;
 }
+
+function makePikachuEar(rightEar) {
+    var tip = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.08, .6),
+                             new THREE.MeshLambertMaterial({ color: 0x000000 }));
+    tip.translateY(0.451);
+                             
+    var ear = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.2, 1.5),
+                             new THREE.MeshLambertMaterial({ color: 0xffff00 }));
+    ear.add(tip);
+    ear.translateY(1);
+    var dx = 0.1 + 0.75;
+    if (rightEar) { dx = -dx; }
+    ear.translateX(dx);
+    var rz = Math.PI/4;
+    if (!rightEar) { rz = -rz; }
+    ear.rotateZ(rz);
+    return ear;
+}
+
+function makePikachu() {
+    
+    var face = new THREE.ImageUtils.loadTexture('pikachu-face.jpg');
+    face.repeat.set(2, 1);
+    //face.offset.set(0.15, 0);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32),
+                              new THREE.MeshLambertMaterial(
+                                { color: 0xffff00,
+                                  map: face }));
+    head.add(makePikachuEar(true)); // right ear
+    head.add(makePikachuEar(false)); // left ear
+    head.translateY(1.3);
+    
+    var torso = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32),
+                               new THREE.MeshLambertMaterial({ color: 0xffff00 })
+                               );
+    addTurningAttribs(torso);
+    torso.add(head);
+
+    torso.translateY(1);
+    return torso;
+}

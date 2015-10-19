@@ -68,6 +68,7 @@ function drawstuff() {
     objects = objects.concat(thisAndDescendants(helperjack));
     helperjack.translateX(2);
     helperjack.translateY(-1.5);
+    helperjack.translateZ(-5);
     helperjack.scale.x = 0.25;  // Locally applied; order is unimportant
     helperjack.scale.y = 1.25;
     scene.add(helperjack);
@@ -87,7 +88,7 @@ function drawstuff() {
     });
     //objects = objects.concat(thisAndDescendants(cone));
     cone.translateX(3);
-    cone.translateZ(-3);
+    cone.translateZ(-8);
     cone.add(new THREE.AxisHelper());
     scene.add(cone);
     
@@ -102,12 +103,17 @@ function drawstuff() {
     objects = objects.concat(thisAndDescendants(cylPyramid));
     //cylPyramid.translateZ();
     cylPyramid.translateY(3);
+    cylPyramid.translateZ(-5);
     scene.add(cylPyramid);
     
     var pyramid = makePolygonPyramid();
     objects = objects.concat(thisAndDescendants(pyramid));
     pyramid.translateY(0.5);
     cube.add( pyramid );
+
+    var pikachu = makePikachu();
+    pikachu.traverse(function (obj) { objects.push(obj); });
+    scene.add(pikachu);
     
     // Add some lights
     var ptLight = makeLights();
