@@ -220,6 +220,8 @@ function makePikachu() {
     addTurningAttribs(torso);
     torso.add(head);
 
-    torso.translateY(1);
+    torso.initialY = 1;
+    torso.translateY(torso.initialY);
+    torso.animating = false;
     return torso;
 }

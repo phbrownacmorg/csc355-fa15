@@ -54,6 +54,8 @@ function drawstuff() {
   
     var theta = 0;
     var dTheta = 0.03;
+    var t = 0;
+    var dt = 0.005;
     
     // Make a cube
     var cube = makeCube();
@@ -102,7 +104,7 @@ function drawstuff() {
     var cylPyramid = makeCylinderPyramid(pyrMaterial);
     objects = objects.concat(thisAndDescendants(cylPyramid));
     //cylPyramid.translateZ();
-    cylPyramid.translateY(3);
+    cylPyramid.translateY(6);
     cylPyramid.translateZ(-5);
     scene.add(cylPyramid);
     
@@ -113,6 +115,8 @@ function drawstuff() {
 
     var pikachu = makePikachu();
     pikachu.traverse(function (obj) { objects.push(obj); });
+    pikachu.translateZ(-8);
+    //pikachu.translateY(-1);
     scene.add(pikachu);
     
     // Add some lights
@@ -145,6 +149,9 @@ function drawstuff() {
             pickedItem = intersects[0].object;
             while (pickedItem.parent !== scene) {
                 pickedItem = pickedItem.parent;
+            }
+            if (pickedItem === pikachu) {
+                pikachu.animating = false;
             }
             pickedItem.traverse(showPicked);
         }
@@ -258,6 +265,12 @@ function drawstuff() {
     var handleKeys = function (event) {
 	var char = event.charCode;
 	switch (String.fromCharCode(event.charCode)) {
+    case 'a':
+            pikachu.animating = !pikachu.animating;
+            if (pikachu.animating === true) {
+                t = 0;
+            }
+            break;
 	case 'l':
             ptLight.oscillating = !ptLight.oscillating;
             break;
@@ -376,9 +389,50 @@ function drawstuff() {
             pickedItem.translateZ(diff.y * dz);
         }
 
-	skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
-	groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
-	renderer.render( scene, camera );
+        if (pikachu.animating) {
+             // Update t
+            t += dt;
+            if ((t <= 0) || (t >= 1)) {
+                dt = -dt;
+            }
+                
+            if (t <= 0.1) {
+                pikachu.position.setY(pikachu.initialY * (1 + 10 * t));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.2) {
+                pikachu.position.setY(pikachu.initialY * (2 - 10 * (t - 0.1)));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.3) {
+                pikachu.position.setY(pikachu.initialY * (1 + 10 * (t - 0.2)));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.4) {
+                pikachu.position.setY(pikachu.initialY * (2 - 10 * (t - 0.3)));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.5) {
+                pikachu.position.setY(pikachu.initialY * (1 + 10 * (t - 0.4)));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.6) {
+                pikachu.position.setY(pikachu.initialY * (2 - 10 * (t - 0.5)));
+                pikachu.position.setX(0);
+            }
+            else if (t <= 0.7) {
+                pikachu.position.setY(pikachu.initialY * (1 + 10 * (t - 0.6)));
+                pikachu.position.setX(-10 * (t - 0.6));
+            }
+            else {
+                pikachu.position.setX(-10 * (t - 0.6));
+            }
+            
+        }
+
+        skyPlane.material.color = new THREE.Color(0x102040).lerp(new THREE.Color(0x4080ff), ptLight.intensity);
+        groundPlane.material.color = new THREE.Color(0x001000).lerp(new THREE.Color(0x005000), ptLight.intensity);
+        renderer.render( scene, camera );
     }
 
     //var v1 = new THREE.Vector3(2, 3, 5);
