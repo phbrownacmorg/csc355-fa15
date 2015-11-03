@@ -40,7 +40,7 @@ function screenToNDC(event, elt) {
 
 function drawstuff() {
     var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    var camera = new THREE.PerspectiveCamera( 25, window.innerWidth / window.innerHeight, 1, 2000 );
     var objects = new Array();
 
     var renderer = new THREE.WebGLRenderer();
@@ -104,7 +104,8 @@ function drawstuff() {
     var cylPyramid = makeCylinderPyramid(pyrMaterial);
     objects = objects.concat(thisAndDescendants(cylPyramid));
     //cylPyramid.translateZ();
-    cylPyramid.translateY(6);
+    cylPyramid.translateX(3);
+    cylPyramid.translateY(5);
     cylPyramid.translateZ(-5);
     scene.add(cylPyramid);
     
@@ -119,12 +120,25 @@ function drawstuff() {
     //pikachu.translateY(-1);
     scene.add(pikachu);
     
+    //var mario = makeBillboard();
+    //objects.push(mario);
+    //mario.translateX(-5);
+    //scene.add(mario);
+    //mario.running = false;
+    
+    var mario2 = makeBillboardSprite();
+    objects.push(mario2);
+    mario2.translateX(-5);
+    scene.add(mario2);
+    mario2.running = false;
+    
     // Add some lights
     var ptLight = makeLights();
     scene.add(ptLight);
     
-    camera.position.y = 1;
-    camera.position.z = 5;  // Sets the eyepoint to (0, 0, 5)
+    camera.position.y = 5;
+    camera.position.z = 25;  // Sets the eyepoint to (0, 0, 5)
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
     // View direction (view vector) defaults to negative Z (i.e., (0, 0, -1))
     // Up vector (which way is up for the camera?) defaults to positive Y (i.e., (0, 1, 0))
   
@@ -274,6 +288,13 @@ function drawstuff() {
 	case 'l':
             ptLight.oscillating = !ptLight.oscillating;
             break;
+    case 'm':
+            mario2.running = !mario2.running;
+            mario2.tex.frame = mario2.tex.numFrames;
+            //mario2.tex.offset.copy(mario2.tex.initialOffset);
+            //mario2.running = true;
+            //mario2.tex.frame = (mario2.tex.frame + 1) % mario2.tex.numFrames;
+            break;
 	case 'p':
             window.setTimeout(function () {
                     cylPyramid.dTheta.setY(-cylPyramid.dTheta.y);
@@ -362,8 +383,13 @@ function drawstuff() {
     cylPyramid.dTheta.setY(dTheta);
     cube.dTheta.setY(dTheta);
 
+    var drawsPerFrame = 3;
+    var i = 0;
     function render() {
         requestAnimationFrame( render );
+        
+        // billboard always faces camera
+        //mario.lookAt(camera.position);
 	
         if (ptLight.oscillating) {
             theta += dTheta;
@@ -388,6 +414,14 @@ function drawstuff() {
             pickedItem.rotation.y += diff.x * dTheta;
             pickedItem.translateZ(diff.y * dz);
         }
+
+        if (mario2.running) {
+            i = (i + 1) % drawsPerFrame;
+            if (i === 0) {
+                mario2.tex.frame = (mario2.tex.frame + 1) % mario2.tex.numFrames;   
+            }
+        }
+        mario2.tex.offset.setX(mario2.tex.frameX[mario2.tex.frame]); // + (mario2.tex.initialOffset.x % mario2.tex.incrX));
 
         if (pikachu.animating) {
              // Update t

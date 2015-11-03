@@ -104,7 +104,7 @@ function makePolygonPyramid() {
 
 function makeLights() {
   var ptLight = new THREE.PointLight( 0xffffff, 2, 10000);
-  ptLight.position.set(3, 3, 0.8);
+  ptLight.position.set(6, 5, 5);
   ptLight.add(new THREE.HemisphereLight(0x4080ff, 0x005000, 0.2));
   ptLight.add(new THREE.AmbientLight(0x202020));
   
@@ -121,14 +121,14 @@ function makeLights() {
 }
 
 function makeSkyPlane() {
-  var plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000),
+  var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(10000, 10000),
           new THREE.MeshBasicMaterial( {color: 0x4080ff} ));
   plane.translateZ(-990);
   return plane;
 }
 
 function makeGroundPlane() {
-  var plane = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000),
+  var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(10000, 10000),
           new THREE.MeshBasicMaterial( {color: 0x005000} ));
   plane.translateY(-5);        
   plane.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
@@ -224,4 +224,35 @@ function makePikachu() {
     torso.translateY(torso.initialY);
     torso.animating = false;
     return torso;
+}
+
+function makeMarioTexture() {
+    var tex = THREE.ImageUtils.loadTexture('mario-sprite-sheet.png');
+    tex.minFilter = THREE.NearestFilter;
+    tex.numFrames = 4;
+    tex.frame = tex.numFrames;
+    tex.frameX = [-0.003, 0.071, 0.138, 0.204, 0.327];
+    tex.repeat.set(1/15, 0.19);
+    tex.offset.set(tex.frameX[tex.frame], 0.81);
+    return tex;
+}
+
+function makeBillboard() {
+    var tex = makeMarioTexture();
+    var board = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 2),
+                               new THREE.MeshLambertMaterial({ 
+                                   color: 0xffffff,
+                                   map: tex }));
+    board.tex = board.tex;
+    addTurningAttribs(board);
+    return board;
+}
+
+function makeBillboardSprite() {
+    var tex = makeMarioTexture();
+    var board = new THREE.Sprite(new THREE.SpriteMaterial( { map: tex} ));
+    board.scale.setY(2);
+    board.tex = tex;
+    addTurningAttribs(board);
+    return board;
 }
