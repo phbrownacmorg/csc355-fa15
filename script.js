@@ -117,6 +117,7 @@ function drawstuff() {
     var pikachu = makePikachu();
     pikachu.traverse(function (obj) { objects.push(obj); });
     pikachu.translateZ(-8);
+    pikachu.translateX(6.5);
     //pikachu.translateY(-1);
     scene.add(pikachu);
     
@@ -132,6 +133,38 @@ function drawstuff() {
     scene.add(mario2);
     mario2.running = false;
     
+    // Add an ignatz
+    var ignatz = makeIgnatz();
+    ignatz.traverse(function (obj) { objects.push(obj); });
+    scene.add(ignatz);
+
+    // Add a transparent plane
+    var p = makePlane(1.5, 1, "rgb(255, 0, 0)");
+    objects.push(p);
+    scene.add(p);
+    p.translateZ(-5);
+    p.translateY(1);
+    p.translateX(-.8);
+
+    var p = makePlane(3, 1, "rgb(0, 0, 255)");
+    objects.push(p);
+    scene.add(p);
+    p.translateZ(-2);
+    p.translateY(1);
+
+    p = makePlane(3, 1, "rgb(255, 0, 0)");
+    objects.push(p);
+    scene.add(p);
+    p.translateZ(2);
+    p.translateY(1);
+
+    p = makePlane(1.5, 1, "rgb(255, 0, 0)");
+    objects.push(p);
+    scene.add(p);
+    p.translateZ(-5);
+    p.translateY(1);
+    p.translateX(.8);
+   
     // Add some lights
     var ptLight = makeLights();
     scene.add(ptLight);

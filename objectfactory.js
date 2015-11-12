@@ -256,3 +256,58 @@ function makeBillboardSprite() {
     addTurningAttribs(board);
     return board;
 }
+
+function makeIgnatzFoot(r, isLeft) {
+    var sideFactor = 1; // right foot
+    if (isLeft) {
+	sideFactor = -1;
+    }
+    
+    var foot = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 32,
+						       0, Math.PI * 2,
+						       0, Math.PI / 2),
+			      new THREE.MeshPhongMaterial( {
+				  color: 0xffcc00,
+				  transparent: true,
+				  opacity: 0.5
+			      } ));
+    foot.translateX(sideFactor * 0.5 * r);
+    foot.translateY(-1.1 * r);
+    foot.rotation.y = sideFactor * 0.3;
+    foot.scale.set(0.4, 0.4, 1);
+
+    return foot;
+}
+
+function makeIgnatz() {
+    var r = 1;
+    var tex = THREE.ImageUtils.loadTexture( "Day-template-edit.svg" );
+    tex.repeat.set(3, 1.5);
+    tex.offset.set(-0.25, -0.2);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 32),
+			      new THREE.MeshPhongMaterial( {
+				  color: 0xffcc00,
+				  transparent: true,
+				  opacity: 0.5,
+				  map: tex
+			      } ));
+
+    head.rightFoot = makeIgnatzFoot(r, true);
+    head.add(head.rightFoot);
+    head.leftFoot = makeIgnatzFoot(r, false);
+    head.add(head.leftFoot);
+    
+    head.translateY(1.1*r);
+    addTurningAttribs(head);
+    return head;
+}
+
+function makePlane(width, height, col) {
+    var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(width, height),
+			       new THREE.MeshLambertMaterial( {
+				   color: new THREE.Color(col),
+				   transparent: true,
+				   opacity: 0.5 }));
+    addTurningAttribs(plane);
+    return plane;
+}
