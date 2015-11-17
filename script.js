@@ -33,9 +33,30 @@ function screenToNDC(event, elt) {
     mouse.x = (event.clientX / elt.clientWidth) * 2 - 1;
     mouse.y = (event.clientY / elt.clientHeight) * -2 + 1;
     // console.log('screenToNDC((' + event.clientX + ',' + event.clientY
-    // 		+ '), (' + elt.clientWidth + ',' + elt.clientHeight 
-    // 		+ ') = (' + mouse.x + ',' + mouse.y + ')');
+    //          + '), (' + elt.clientWidth + ',' + elt.clientHeight 
+    //          + ') = (' + mouse.x + ',' + mouse.y + ')');
     return mouse;
+}
+
+function setIgnatzOpacities(ignatz) {
+    if (ignatz.currentSlice < 0) {
+	ignatz.material.opacity = 1;
+	ignatz.renderOrder = 0;
+    }
+    else {
+	ignatz.material.opacity = 0.4;
+	ignatz.renderOrder = 10;
+    }
+
+    // Set the planes
+    for (var i = 0; i < ignatz.currentSlice; i++) {
+	ignatz.planes[i].material.opacity = 0.05;
+	ignatz.planes[i].renderOrder = 8;
+    }
+    for (i = ignatz.currentSlice; i < ignatz.planes.length; i++) {
+	ignatz.planes[i].material.opacity = 1;
+	ignatz.planes[i].renderOrder = 0;
+    }
 }
 
 function drawstuff() {
@@ -49,8 +70,8 @@ function drawstuff() {
 
     var elt = renderer.domElement;
     // alert(elt.clientWidth + " x " + elt.clientHeight + " : "
-    // 	  + elt.scrollWidth + " x " + elt.scrollHeight + " : "
-    // 	  + elt.offsetWidth + " x " + elt.offsetHeight);
+    //    + elt.scrollWidth + " x " + elt.scrollHeight + " : "
+    //    + elt.offsetWidth + " x " + elt.offsetHeight);
   
     var theta = 0;
     var dTheta = 0.03;
@@ -59,7 +80,7 @@ function drawstuff() {
     
     // Make a cube
     var cube = makeCube();
-    objects = thisAndDescendants(cube);
+    cube.traverse(function (obj) { objects.push(obj); });
     scene.add( cube );
     cube.translateX(-2);
     cube.translateZ(-5);
@@ -67,7 +88,7 @@ function drawstuff() {
   // Add an axis jack
     var helperjack = new THREE.AxisHelper();
     addTurningAttribs(helperjack);
-    objects = objects.concat(thisAndDescendants(helperjack));
+    helperjack.traverse(function (obj) { objects.push(obj); });
     helperjack.translateX(2);
     helperjack.translateY(-1.5);
     helperjack.translateZ(-5);
@@ -86,7 +107,7 @@ function drawstuff() {
     // Add an ice-cream cone
     cone = makeIceCreamCone();
     cone.traverse(function(obj) {
-	objects.push(obj);
+        objects.push(obj);
     });
     //objects = objects.concat(thisAndDescendants(cone));
     cone.translateX(3);
@@ -102,7 +123,7 @@ function drawstuff() {
     
     var pyrMaterial = makePyramidMaterial();
     var cylPyramid = makeCylinderPyramid(pyrMaterial);
-    objects = objects.concat(thisAndDescendants(cylPyramid));
+    cylPyramid.traverse(function (obj) { objects.push(obj); });
     //cylPyramid.translateZ();
     cylPyramid.translateX(3);
     cylPyramid.translateY(5);
@@ -110,7 +131,7 @@ function drawstuff() {
     scene.add(cylPyramid);
     
     var pyramid = makePolygonPyramid();
-    objects = objects.concat(thisAndDescendants(pyramid));
+    pyramid.traverse(function (obj) { objects.push(obj); });
     pyramid.translateY(0.5);
     cube.add( pyramid );
 
@@ -121,12 +142,6 @@ function drawstuff() {
     //pikachu.translateY(-1);
     scene.add(pikachu);
     
-    //var mario = makeBillboard();
-    //objects.push(mario);
-    //mario.translateX(-5);
-    //scene.add(mario);
-    //mario.running = false;
-    
     var mario2 = makeBillboardSprite();
     objects.push(mario2);
     mario2.translateX(-5);
@@ -136,35 +151,42 @@ function drawstuff() {
     // Add an ignatz
     var ignatz = makeIgnatz();
     ignatz.traverse(function (obj) { objects.push(obj); });
+    ignatz.translateX(-7);
     scene.add(ignatz);
 
     // Add a transparent plane
     var p = makePlane(1.5, 1, "rgb(255, 0, 0)");
     objects.push(p);
     scene.add(p);
-    p.translateZ(-5);
+    p.translateZ(-10 - 5);
     p.translateY(1);
-    p.translateX(-.8);
+    p.translateX(-5 + -.8);
 
     var p = makePlane(3, 1, "rgb(0, 0, 255)");
     objects.push(p);
     scene.add(p);
-    p.translateZ(-2);
+    p.translateZ(-10 - 2);
     p.translateY(1);
+    p.translateX(-5);
 
     p = makePlane(3, 1, "rgb(255, 0, 0)");
     objects.push(p);
     scene.add(p);
-    p.translateZ(2);
+    p.translateZ(-10 + 2);
     p.translateY(1);
+    p.translateX(-5);
 
     p = makePlane(1.5, 1, "rgb(255, 0, 0)");
     objects.push(p);
     scene.add(p);
-    p.translateZ(-5);
+    p.translateZ(-10 - 5);
     p.translateY(1);
-    p.translateX(.8);
-   
+    p.translateX(-5 + .8);
+
+    // Make lightning, just for trial
+    //scene.add(makeLightning(new THREE.Vector3(0,0,0),
+    //			    new THREE.Vector3(5,5,5)));
+
     // Add some lights
     var ptLight = makeLights();
     scene.add(ptLight);
@@ -175,7 +197,7 @@ function drawstuff() {
     // View direction (view vector) defaults to negative Z (i.e., (0, 0, -1))
     // Up vector (which way is up for the camera?) defaults to positive Y (i.e., (0, 1, 0))
   
-    ptLight.oscillating = true;
+    ptLight.oscillating = false;
   
     var raycaster = new THREE.Raycaster();
     var pickedItem = undefined;
@@ -206,7 +228,7 @@ function drawstuff() {
     elt.addEventListener('mousedown', handleClick);
     
     var dragObject = function(event) {
-	//console.log(event.type);
+        //console.log(event.type);
         if ((event.buttons & 1) && (pickedItem !== undefined)) {
             var newMouse = screenToNDC(event, elt);
             // Difference between mouse position and click in screen space.
@@ -221,7 +243,7 @@ function drawstuff() {
             // I bet there's a relationship between kludge and the
             // camera's FOV, which I will figure out iff I have to
             var kludge = elt.clientWidth * .770;  
-	        // 990 on lab machine, 1280 x 643 window
+                // 990 on lab machine, 1280 x 643 window
                 // 770 on home Linux machine, 1003 x 637 window;
             // Fudge has to do with the fact that NDC isn't square in screen space
             var fudge = new THREE.Vector2(kludge / elt.clientHeight,
@@ -232,7 +254,7 @@ function drawstuff() {
             // Vectors along which to translate are world-space X and Y
             var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
             worldX.normalize();
-            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0),	pickedItem);
+            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0), pickedItem);
             worldY.normalize();
                 //console.log('worldX: ' + JSON.stringify(worldX));
     
@@ -271,7 +293,7 @@ function drawstuff() {
             // Vectors about which to rotate are world-space X and Y
             var worldX = undoObjRot(new THREE.Vector3(1, 0, 0), pickedItem);
             worldX.normalize();
-            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0),	pickedItem);
+            var worldY = undoObjRot(new THREE.Vector3(0, 1, 0), pickedItem);
             worldY.normalize();
 
             // Do the actual rotation
@@ -312,28 +334,36 @@ function drawstuff() {
     var handleKeys = function (event) {
 	var char = event.charCode;
 	switch (String.fromCharCode(event.charCode)) {
-    case 'a':
+	case '-':
+	    ignatz.currentSlice++;
+	    setIgnatzOpacities(ignatz);
+	    break;
+	case '+':
+	    ignatz.currentSlice--;
+	    setIgnatzOpacities(ignatz);
+	    break;
+	case 'a':
             pikachu.animating = !pikachu.animating;
             if (pikachu.animating === true) {
                 t = 0;
             }
             break;
-	case 'l':
+        case 'l':
             ptLight.oscillating = !ptLight.oscillating;
             break;
-    case 'm':
+	case 'm':
             mario2.running = !mario2.running;
             mario2.tex.frame = mario2.tex.numFrames;
             //mario2.tex.offset.copy(mario2.tex.initialOffset);
             //mario2.running = true;
             //mario2.tex.frame = (mario2.tex.frame + 1) % mario2.tex.numFrames;
             break;
-	case 'p':
+        case 'p':
             window.setTimeout(function () {
                     cylPyramid.dTheta.setY(-cylPyramid.dTheta.y);
                 }, 5000);
             break;
-    case 'r':
+	case 'r':
             elt.removeEventListener('mousemove', dragObject, false);
             elt.removeEventListener('mousedown', startDrag);
             elt.removeEventListener('mouseup', finishDrag, false);
@@ -342,12 +372,12 @@ function drawstuff() {
             $('.control').addClass('hidden');
             $('.turning').removeClass('hidden');
             break;
-	case 's':
+        case 's':
             if (pickedItem !== undefined) {
                 pickedItem.scale = pickedItem.scale.multiplyScalar(2);
             }
             break;
-    case 't':
+	case 't':
             elt.removeEventListener('mousemove', turnObject, false);
             elt.removeEventListener('mousedown', startDrag);
             elt.removeEventListener('mouseup', finishDrag, false);
@@ -356,7 +386,7 @@ function drawstuff() {
             $('.control').addClass('hidden');
             $('.turning').addClass('hidden');
             break;
-	case 'x':
+        case 'x':
             if (pickedItem !== undefined) {
                 if (pickedItem.dTheta.x === 0) {
                     pickedItem.dTheta.setX(dTheta);
@@ -364,7 +394,7 @@ function drawstuff() {
                 else pickedItem.dTheta.setX(0);
             }
             break;
-	case 'y':
+        case 'y':
             if (pickedItem !== undefined) {
                 if (pickedItem.dTheta.y === 0) {
                     pickedItem.dTheta.setY(dTheta);
@@ -372,7 +402,7 @@ function drawstuff() {
                 else pickedItem.dTheta.setY(0);
             }
             break;
-	case 'z':
+        case 'z':
             if (pickedItem !== undefined) {
                 if (pickedItem.dTheta.z === 0) {
                     pickedItem.dTheta.setZ(dTheta);
@@ -380,13 +410,13 @@ function drawstuff() {
                 else pickedItem.dTheta.setZ(0);
             }
             break;
-    case '0':
+	case '0':
             //alert('0 detected');
             if (pickedItem !== undefined) {
                 pickedItem.rotation.setFromVector3(new THREE.Vector3(0, 0, 0));
             }
             break;
-    case '1':
+	case '1':
             // Mouse control of the selected object, *not* using pointer lock
             $('.dragging').addClass('hidden');
             $('.control').removeClass('hidden');
@@ -397,33 +427,30 @@ function drawstuff() {
             elt.addEventListener('mouseup', finishDrag, false);
             dragStarted = false;
             break;
-    case '2':
+	case '2':
             // Mouse control of selected object using pointer lock
             $('.dragging').addClass('hidden');
             $('.control').removeClass('hidden');
             $('.turning').addClass('hidden');
             break;
-	case '?':
+        case '?':
             //console.log('? detected');
             toggleHelp();
             break;
-	}
+        }
     }
     document.addEventListener('keypress', handleKeys, false);
   
     var lum = ptLight.intensity;
     var dz = 0.1;
-    cylPyramid.dTheta.setY(dTheta);
-    cube.dTheta.setY(dTheta);
+    //cylPyramid.dTheta.setY(dTheta);
+    //cube.dTheta.setY(dTheta);
 
     var drawsPerFrame = 3;
     var i = 0;
     function render() {
         requestAnimationFrame( render );
         
-        // billboard always faces camera
-        //mario.lookAt(camera.position);
-	
         if (ptLight.oscillating) {
             theta += dTheta;
             ptLight.intensity = lum * (0.25 * Math.cos(theta) + 0.75);

@@ -16,18 +16,12 @@ function depthScalingFactor(obj, camera) {
     //   pickedItem.matrix === pickedItem.matrixWorld
     var objLoc = new THREE.Vector3();
     objLoc.setFromMatrixPosition(obj.matrixWorld);
-    //console.log(JSON.stringify(obj.matrix));
-    //console.log(JSON.stringify(obj.matrixWorld));
-    //console.log(JSON.stringify(objLoc));
     var eyeLoc = new THREE.Vector3();
     eyeLoc.setFromMatrixPosition(camera.matrixWorld);
     
     var diff = new THREE.Vector3();
     diff.subVectors(eyeLoc, objLoc);
-    // var dir = camera.getWorldDirection();
-    // console.log(JSON.stringify(dir));
     diff.projectOnVector(camera.getWorldDirection());
-    //console.log(JSON.stringify(diff));
 
     return diff.length();
 }    
@@ -36,26 +30,13 @@ function addTurningAttribs(obj) {
     obj.dTheta = new THREE.Vector3();
 }
 
-function thisAndDescendants(obj) {
-    var result = new Array(obj);
-    //console.log('Starting with ' + result.length);
-    for (var i = 0; i < obj.children.length; i++) {
-        //console.log('Child ' + i);
-        result = result.concat(thisAndDescendants(obj.children[i]));
-    }
-    //console.log('Returning ' + result.length);
-    return result;
-}
-
 function makePyramidMaterial() {
     var pyrColor = new THREE.Color(0xffff00);
-    //var material = new THREE.MeshBasicMaterial( { color: pyrColor } );
     var tex = new THREE.ImageUtils.loadTexture('cosine-texture.png');
 
     var material = new THREE.MeshPhongMaterial( {
          color: pyrColor,
-         map: tex //,
-         //side: THREE.DoubleSide
+         map: tex
          } );
 
     return material;
@@ -72,8 +53,7 @@ function makeCylinderPyramid(material) {
 
 function makePolygonPyramid() {
     var material = new THREE.MeshLambertMaterial( {
-        color: 0xffff00 //,
-        //side: THREE.DoubleSide
+        color: 0xffff00
     } );
     var geom = new THREE.Geometry();
     geom.vertices.push(new THREE.Vector3(0.5, 0, 0.5));   // 0
@@ -115,7 +95,6 @@ function makeLights() {
                               side: THREE.BackSide,
                               }));
   ptLight.add(bulb);
-  //ptLight.add(new THREE.PointLightHelper(ptLight, 0.05));
   
   return ptLight;
 }
@@ -132,7 +111,6 @@ function makeGroundPlane() {
           new THREE.MeshBasicMaterial( {color: 0x005000} ));
   plane.translateY(-5);        
   plane.rotateOnAxis(new THREE.Vector3(1, 0, 0), THREE.Math.degToRad(-90));
-  //plane.translateZ(-990);
   return plane;
 }
 
@@ -141,8 +119,6 @@ function makeIceCreamCone() {
   var coneTex = new THREE.ImageUtils.loadTexture('waffle-texture-256.jpg');
   var mat = new THREE.MeshLambertMaterial( { color: new THREE.Color(0x5d4934).multiplyScalar(5),
                                              map: coneTex } );
-  //mat.transparent = true;
-  //mat.opacity = 0.0;
   var cone = new THREE.Mesh(geom, mat);
   
   var icTex = new THREE.ImageUtils.loadTexture('Haveaniceday-512.jpg');
@@ -257,26 +233,84 @@ function makeBillboardSprite() {
     return board;
 }
 
+function makeIgnatzMaterial(tex) {
+    var result = new THREE.MeshPhongMaterial( {
+                        color: 0xffcc00,
+                        transparent: true,
+                        opacity: 1 } );
+    if (tex !== undefined) {
+        result.map = tex;
+    }
+    return result;
+}
+
 function makeIgnatzFoot(r, isLeft) {
     var sideFactor = 1; // right foot
     if (isLeft) {
-	sideFactor = -1;
+        sideFactor = -1;
     }
     
     var foot = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 32,
-						       0, Math.PI * 2,
-						       0, Math.PI / 2),
-			      new THREE.MeshPhongMaterial( {
-				  color: 0xffcc00,
-				  transparent: true,
-				  opacity: 0.5
-			      } ));
+                                                    0, Math.PI * 2,
+                                                    0, Math.PI / 2), 
+                              makeIgnatzMaterial());
     foot.translateX(sideFactor * 0.5 * r);
     foot.translateY(-1.1 * r);
     foot.rotation.y = sideFactor * 0.3;
     foot.scale.set(0.4, 0.4, 1);
+    foot.renderOrder = 10;
 
     return foot;
+}
+
+function makeTextureOffsets() {
+    var rowLength = 7;
+    var result = new Array();
+    var xOff = 0;
+    var yOff = 0;
+    for (var row = 1; row < 5; row++) {
+        for (var col = 0; col < rowLength; col++) {
+            xOff = col / rowLength;
+            yOff = 1 - (row / rowLength);
+            result.push(new THREE.Vector2(xOff, yOff));
+        }
+    }
+    // Last row
+    yOff = 1 - 5 / rowLength;
+    for (var col = 0; col < rowLength-1; col++) {
+        xOff = (0.5 + col) / rowLength;
+        result.push(new THREE.Vector2(xOff, yOff));
+    }
+    return result;
+}
+
+function makeIgnatzCTPlane(r, i, offsets) {
+    var tex = THREE.ImageUtils.loadTexture( "CT-slices-1.png" );
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    var freq = 1.0 / 7;
+    tex.repeat.set(freq, freq);
+    tex.offset.copy(offsets[i]);
+    var material = new THREE.MeshBasicMaterial( { transparent: true,
+                       side: THREE.DoubleSide, alphaMap: tex, map: tex
+                                                } );
+    var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(2 * r, 2 * r),
+                               material);
+    return plane;
+}
+
+function makeIgnatzPlaneArray(head, r) {
+    var numPlanes = 34; // Dependent on texture used
+    var texOffsets = makeTextureOffsets();
+    var result = new Array();
+    for (var i = 0; i < numPlanes; i++) {
+        var newPlane = makeIgnatzCTPlane(r, i, texOffsets);
+        newPlane.translateY((r) * (i/numPlanes));
+        newPlane.rotateX(Math.PI/2);
+        head.add(newPlane);
+        result.push(newPlane);
+    }
+    return result.reverse();
 }
 
 function makeIgnatz() {
@@ -284,19 +318,19 @@ function makeIgnatz() {
     var tex = THREE.ImageUtils.loadTexture( "Day-template-edit.svg" );
     tex.repeat.set(3, 1.5);
     tex.offset.set(-0.25, -0.2);
+    var material = makeIgnatzMaterial(tex);
     var head = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 32),
-			      new THREE.MeshPhongMaterial( {
-				  color: 0xffcc00,
-				  transparent: true,
-				  opacity: 0.5,
-				  map: tex
-			      } ));
-
+                               material);
+    head.mtrl = material;
+    
     head.rightFoot = makeIgnatzFoot(r, true);
     head.add(head.rightFoot);
     head.leftFoot = makeIgnatzFoot(r, false);
     head.add(head.leftFoot);
-    
+
+    head.planes = makeIgnatzPlaneArray(head, r);
+    head.currentSlice = -1;
+    head.renderOrder = 0;
     head.translateY(1.1*r);
     addTurningAttribs(head);
     return head;
@@ -304,10 +338,36 @@ function makeIgnatz() {
 
 function makePlane(width, height, col) {
     var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(width, height),
-			       new THREE.MeshLambertMaterial( {
-				   color: new THREE.Color(col),
-				   transparent: true,
-				   opacity: 0.5 }));
+                               new THREE.MeshLambertMaterial( {
+                                   color: new THREE.Color(col),
+                                   transparent: true,
+                                   opacity: 0.5 }));
     addTurningAttribs(plane);
     return plane;
+}
+
+function makeLightning(start, end) {
+    var numJags = 30;
+    var curve = new THREE.SplineCurve3([start, end]);
+    var points = curve.getPoints(numJags);
+    //console.log(points);
+    var length = start.distanceTo(end);
+    var jagScale = length / (numJags * Math.sqrt(3));
+    for (var i = 1; i < (points.length - 1); i++) {
+	var offset = new THREE.Vector3(Math.random(), Math.random(),
+				       Math.random());
+	offset.multiplyScalar(jagScale);
+	points[i].add(offset);
+	//console.log(i + ": " + offset + " " + points[i]);
+    }
+    curve = new THREE.SplineCurve3(points);
+    //console.log(curve);
+    var geom = new THREE.TubeGeometry(curve, 64, 0.1);
+    //console.log(geom);
+    var bolt = new THREE.Mesh(geom,
+			      new THREE.MeshBasicMaterial( {
+				  side: THREE.DoubleSide
+			      }));
+    //console.log(bolt);
+    return bolt;
 }
