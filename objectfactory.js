@@ -159,6 +159,23 @@ function makeCube() {
     return cube;
 }
 
+function getCheekSpots(pikachu) {
+    var result = new Object();
+    var head = pikachu.children[0];
+    console.log('head: ' + JSON.stringify(head));
+    var rotAxis = new THREE.Vector3(0, 1, 0).applyEuler(new THREE.Euler(0, 0, THREE.Math.degToRad(20))).normalize();
+    var right = new THREE.Vector3(0, 0, 0.7).applyAxisAngle(rotAxis, THREE.Math.degToRad(-50));
+    //console.log('right: ' + JSON.stringify(right));
+    rotAxis = new THREE.Vector3(0, 1, 0).applyEuler(new THREE.Euler(0, 0, THREE.Math.degToRad(-20))).normalize();
+    var left = new THREE.Vector3(0, 0, 0.7).applyAxisAngle(rotAxis, THREE.Math.degToRad(50));
+    pikachu.updateMatrixWorld(true);
+    //console.log('center: ' + JSON.stringify(head.localToWorld(new THREE.Vector3())));
+    result.right = head.localToWorld(right);
+    result.left = head.localToWorld(left);
+    console.log('result.right: ' + JSON.stringify(result.right));
+    return result;
+}
+
 function makePikachuEar(rightEar) {
     var tip = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.08, .6),
                              new THREE.MeshLambertMaterial({ color: 0x000000 }));
@@ -199,6 +216,14 @@ function makePikachu() {
     torso.initialY = 1;
     torso.translateY(torso.initialY);
     torso.animating = false;
+
+    torso.zap = function(target) {
+	target.updateMatrixWorld(true);
+	var targetPt = target.localToWorld(target.geometry.center());
+	torso.lookAt(targetPt);
+	return makeLightningFork(torso, targetPt);
+    }
+
     return torso;
 }
 
@@ -368,6 +393,21 @@ function makeLightning(start, end) {
 			      new THREE.MeshBasicMaterial( {
 				  side: THREE.DoubleSide
 			      }));
+    // bolt = new THREE.Mesh(new THREE.SphereGeometry(0.1),
+    // 			  new THREE.MeshBasicMaterial());
+    // bolt.translateX(start.x);
+    // bolt.translateY(start.y);
+    // bolt.translateZ(start.z);
     //console.log(bolt);
     return bolt;
+}
+
+function makeLightningFork(pikachu, targetPt) {
+    var spots = getCheekSpots(pikachu);
+    var leftBolt = makeLightning(spots.left, targetPt);
+    var rightBolt = makeLightning(spots.right, targetPt);
+    var result = new THREE.Object3D();
+    result.add(leftBolt);
+    result.add(rightBolt);
+    return result;
 }

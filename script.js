@@ -151,8 +151,10 @@ function drawstuff() {
     // Add an ignatz
     var ignatz = makeIgnatz();
     ignatz.traverse(function (obj) { objects.push(obj); });
-    ignatz.translateX(-7);
-    scene.add(ignatz);
+    //ignatz.translateX(-7);
+    //scene.add(ignatz);
+    var hole = new BouncingObject(1.5, -7, 0, ignatz);
+    scene.add(hole);
 
     // Add a transparent plane
     var p = makePlane(1.5, 1, "rgb(255, 0, 0)");
@@ -184,9 +186,9 @@ function drawstuff() {
     p.translateX(-5 + .8);
 
     // Make lightning, just for trial
-    //scene.add(makeLightning(new THREE.Vector3(0,0,0),
-    //			    new THREE.Vector3(5,5,5)));
-
+    //var spots = getCheekSpots(pikachu);
+    //scene.add(pikachu.zap(ignatz));
+    
     // Add some lights
     var ptLight = makeLights();
     scene.add(ptLight);
@@ -219,6 +221,7 @@ function drawstuff() {
             while (pickedItem.parent !== scene) {
                 pickedItem = pickedItem.parent;
             }
+	    pickedItem.fried = true;
             if (pickedItem === pikachu) {
                 pikachu.animating = false;
             }

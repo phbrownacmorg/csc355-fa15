@@ -5,6 +5,8 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <script src="CountDownTimer.js"></script>
+    <script src="BouncingObject.js"></script>
     <script src="objectfactory.js"></script>
     <script src="script.js"></script>
   </head>
@@ -14,7 +16,10 @@
     <script>
 			// Our Javascript will go here.
 			drawstuff();
-		</script>
+    </script>
+    <div id="clock-etc">
+      <span id="timer">Time left: <span id="minutes">1</span>:<span id="seconds">00</span></span>
+    </div>
         <form>
             <input id="helpbutton" type="button" value="Help" onclick="toggleHelp();" />
         </form>
